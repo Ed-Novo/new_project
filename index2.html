@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Список с цветом</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 60%;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 16px;
+      margin-left: 10px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #f7f7f7;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    li:hover {
+      background: #e0e0e0;
+      cursor: pointer;
+    }
+
+    .date {
+      font-size: 12px;
+      color: #666;
+      margin-left: 20px;
+    }
+
+    #filterInput {
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .color-picker {
+      position: absolute;
+      display: none;
+      padding: 4px;
+      background: white;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Мой список с цветом и фильтром</h2>
+
+ <ul id=5> 
+     <li id=4><input type="text" id="itemInput" placeholder="Введите элемент...">
+  <button onclick="addItem()">Добавить</button> 
+  <button onclick="clearAllItems()">Удалить всё</button>
+</li>
+</ul>
+
+  <input type="text" id="filterInput" placeholder="Фильтр по тексту...">
+  <ul id="itemList"></ul>
+
+  <input type="color" id="colorPicker" class="color-picker">
+
+  <script>
+    const itemInput = document.getElementById('itemInput');
+    const itemList = document.getElementById('itemList');
+    const filterInput = document.getElementById('filterInput');
+    const colorPicker = document.getElementById('colorPicker');
+
+    let currentTargetLi = null;
+
+    window.onload = () => {
+      const saved = localStorage.getItem('myList');
+      if (saved) {
+        JSON.parse(saved).forEach(item => createListItem(item.text, item.date, item.color));
+      }
+    };
+
+    function addItem() {
+      const text = itemInput.value.trim();
+      if (!text) return;
+      const date = new Date().toLocaleString();
+      createListItem(text, date, '#000000');
+      saveToStorage();
+      itemInput.value = '';
+    }
+
+    itemInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem();
+    });
+
+    filterInput.addEventListener('input', () => {
+      const filter = filterInput.value.toLowerCase();
+      document.querySelectorAll('#itemList li').forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    });
+
+    function createListItem(text, date, color) {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      const dateSpan = document.createElement('span');
+
+      span.textContent = text;
+      span.style.color = color || '#000';
+
+      dateSpan.className = 'date';
+      dateSpan.textContent = date;
+
+      li.appendChild(span);
+      li.appendChild(dateSpan);
+
+      li.onclick = () => {
+        li.style.opacity = '0';
+        setTimeout(() => {
+          li.remove();
+          saveToStorage();
+        }, 300);
+      };
+
+      li.oncontextmenu = (e) => {
+        e.preventDefault();
+        currentTargetLi = span;
+        colorPicker.style.left = `${e.pageX}px`;
+        colorPicker.style.top = `${e.pageY}px`;
+        colorPicker.style.display = 'block';
+      };
+
+      itemList.appendChild(li);
+    }
+
+    colorPicker.addEventListener('change', () => {
+      if (currentTargetLi) {
+        currentTargetLi.style.color = colorPicker.value;
+        colorPicker.style.display = 'none';
+        saveToStorage();
+      }
+    });
+
+    window.addEventListener('click', () => {
+      colorPicker.style.display = 'none';
+    });
+
+    function saveToStorage() {
+      const items = [];
+      document.querySelectorAll('#itemList li').forEach(li => {
+        const span = li.querySelector('span');
+        const date = li.querySelector('.date').textContent;
+        items.push({ text: span.textContent, date: date, color: span.style.color });
+      });
+      localStorage.setItem('myList', JSON.stringify(items));
+    }
+    function clearAllItems() {
+  if (confirm("Вы уверены, что хотите удалить весь список?")) {
+    itemList.innerHTML = '';
+    localStorage.removeItem('myList');
+  }
+}
+  </script>
+
+</body>
+</html>
+
+
